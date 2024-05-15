@@ -17,7 +17,7 @@ public typealias NavigatorReducerOf<R: Reducer, P: Reducer> = Reducer<
 >
 
 public enum StackElement<T> {
-    case external(OpaqueStackElement) // we could even make an opaque wrapper that doesn't even let you get the element. but what we can't do is to not have the assocaited value.
+    case external(OpaqueStackElement) // we could even make an opaque wrapper that doesn't even let you get the element. but what we can't do is to not have the associated value.
     case screen(T)
 }
 

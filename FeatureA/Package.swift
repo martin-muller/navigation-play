@@ -16,6 +16,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/martin-muller/swift-composable-architecture.git", branch: "feature/less-strict-stack-state"),
+        .package(path: "../TCAExtensions"),
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -24,6 +25,7 @@ let package = Package(
             name: "FeatureA",
             dependencies: [
                 .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
+                "TCAExtensions"
             ]
         
         ),
