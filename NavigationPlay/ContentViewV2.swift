@@ -85,6 +85,7 @@ struct ContentViewV2: View {
                     store.send(.openFeatureB)
                 }
             }
+            .navigationTitle("Home - Integrator v2")
         } destination: { store in
             switch store.case {
             case .featureA(let store):
