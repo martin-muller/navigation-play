@@ -14,36 +14,45 @@ public struct FeatureBNavigator: Reducer {
     public var body: some NavigatorReducerOf<Path> {
         Reduce { state, action in
             switch action {
-            case let .element(id: _, action: .detail(.delegate(delegate))):
-                switch delegate {
-                case let .openEdit(value: value):
-                    state.append(.edit(.init(value: value)))
+            case let .element(id: _, action: .screen(screenAction)):
+                switch screenAction {
+                case let .detail(.delegate(delegate)):
+                    switch delegate {
+                    case let .openEdit(value: value):
+                        state.append(.edit(.init(value: value)))
+                        return .none
+                    }
+                    
+                case let .edit(.delegate(delegate)):
+                    switch delegate {
+                    case .save:
+                        let updatedMessage: String
+                        if let lastId = state.ids.last,
+                            case var .screen(.edit(edit)) = state[id: lastId] {
+                            updatedMessage = edit.value
+                        } else {
+                            return .none
+                        }
+                        
+                        _ = state.popLast()
+                        
+                        guard let lastId = state.ids.last else {
+                            return .none
+                        }
+                        
+                        if case var .screen(.detail(detail)) = state[id: lastId] {
+                            detail.message = updatedMessage
+                            state[id: lastId] = .screen(.detail(detail))
+                        }
+                        
+                        return .send(.element(id: lastId, action: .detail(.receiveAction)))
+                    }
+                    
+                case .detail:
                     return .none
-                }
-                
-            case let .element(id: _, action: .edit(.delegate(delegate))):
-                switch delegate {
-                case .save:
-                    let updatedMessage: String
-                    if let lastId = state.ids.last,
-                        case var .screen(.edit(edit)) = state[id: lastId] {
-                        updatedMessage = edit.value
-                    } else {
-                        return .none
-                    }
                     
-                    _ = state.popLast()
-                    
-                    guard let lastId = state.ids.last else {
-                        return .none
-                    }
-                    
-                    if case var .screen(.detail(detail)) = state[id: lastId] {
-                        detail.message = updatedMessage
-                        state[id: lastId] = .screen(.detail(detail))
-                    }
-                    
-                    return .send(.element(id: lastId, action: .detail(.receiveAction)))
+                case .edit:
+                    return .none
                 }
                 
             case .element:

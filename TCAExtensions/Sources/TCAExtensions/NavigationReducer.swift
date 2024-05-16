@@ -2,11 +2,11 @@ import ComposableArchitecture
 
 public typealias NavigatorReducerOf<P: Reducer> = Reducer<
     StackState<StackElement<P.State>>,
-    StackActionOf<P>
+    StackAction<StackElement<P.State>, StackElement<P.Action>>
 >
 
 public enum StackElement<T> {
-    case external(OpaqueStackElement) // we could even make an opaque wrapper that doesn't even let you get the element. but what we can't do is to not have the assocaited value.
+    case external(OpaqueStackElement)
     case screen(T)
 }
 
@@ -21,6 +21,12 @@ public struct OpaqueStackElement {
 extension StackState {
     public mutating func append<T>(_ newElement: T) where Element == StackElement<T> {
         self.append(.screen(newElement))
+    }
+}
+
+extension StackAction {
+    public static func element<T>(id: StackElementID, action: T) -> Self where Action == StackElement<T> {
+        .element(id: id, action: .screen(action))
     }
 }
 
@@ -74,7 +80,7 @@ public struct NavigationPathReducer<
     FeatureNavigatorReducer: Reducer
 >: Reducer where
 FeatureNavigatorReducer.State == StackState<StackElement<FeaturePathState>>,
-FeatureNavigatorReducer.Action == StackAction<FeaturePathState, FeaturePathAction>
+FeatureNavigatorReducer.Action == StackAction<StackElement<FeaturePathState>, StackElement<FeaturePathAction>>
 {
     let statekp: AnyCasePath<IntegratorPathState, FeaturePathState>
     let actionkp: AnyCasePath<IntegratorPathAction, FeaturePathAction>
@@ -90,27 +96,33 @@ FeatureNavigatorReducer.Action == StackAction<FeaturePathState, FeaturePathActio
         self.featureNavigatorReducer = featureNavigatorReducer() // here or every time in the reduce?
     }
     
-    public func reduce(into state: inout StackState<IntegratorPathState>, action:  StackAction<IntegratorPathState, IntegratorPathAction>) -> Effect< StackAction<IntegratorPathState, IntegratorPathAction>> {
+    public func reduce(
+        into state: inout StackState<IntegratorPathState>,
+        action: StackAction<IntegratorPathState, IntegratorPathAction>
+    ) -> Effect<StackAction<IntegratorPathState, IntegratorPathAction>> {
 
         // Check the action is for the Feature and transform it
-        guard let transformedAction: StackAction<FeaturePathState, FeaturePathAction> =  switch action {
+        guard let transformedAction: StackAction<StackElement<FeaturePathState>, StackElement<FeaturePathAction>> = switch action {
         case .element(id: let id, action: let featurePathAction):
             if let extracted = actionkp.extract(from: featurePathAction) {
-                .element(id: id, action: extracted)
+                .element(id: id, action: .screen(extracted))
             } else {
-                nil
+                .element(id: id, action: .external(.init(element: featurePathAction)))
             }
             
-            // Should we forward these 2 too? makes sense a feature wants to listen for other features changes? or maybe just fw its own but then there is no points since is the same code taht is doing the action.
-        case .popFrom(id: _):
-            nil
-        case .push(id: _, state: _):
-            nil
+        case let .popFrom(id: id):
+            .popFrom(id: id)
+        case let .push(id: id, state: state):
+            if let extracted = statekp.extract(from: state) {
+                .push(id: id, state: .screen(extracted))
+            } else {
+                .push(id: id, state: .external(.init(element: state)))
+            }
+            
         }
         else {
             return .none
         }
-        print(transformedAction)
         
         // Transform the stackstate to a "view" for feature A
         var converted = StackState<StackElement<FeaturePathState>>()
@@ -142,15 +154,27 @@ FeatureNavigatorReducer.Action == StackAction<FeaturePathState, FeaturePathActio
         
         state = new
         
-        let featureEffects: Effect<StackAction<IntegratorPathState, IntegratorPathAction>> = effects.map { (effect: StackAction<FeaturePathState, FeaturePathAction>) in
+        let featureEffects: Effect<StackAction<IntegratorPathState, IntegratorPathAction>> = effects.map { (effect: StackAction<StackElement<FeaturePathState>, StackElement<FeaturePathAction>>) in
             
             switch effect {
             case let .element(id: id, action: featureAction):
-                return .element(id: id, action: actionkp.embed(featureAction))
+                switch featureAction {
+                case let .screen(screenAction):
+                    return .element(id: id, action: actionkp.embed(screenAction))
+                case let .external(externalAction):
+                    return .element(id: id, action: externalAction.element as! IntegratorPathAction)
+                }
+                
             case let .popFrom(id: id):
                 return .popFrom(id: id)
             case let .push(id: id, state: featureState):
-                return .push(id: id, state: statekp.embed(featureState))
+                switch featureState {
+                case let .screen(screenState):
+                    return .push(id: id, state: statekp.embed(screenState))
+                case let .external(externalState):
+                    return .push(id: id, state: externalState.element as! IntegratorPathState)
+                }
+                
             }
         }
 

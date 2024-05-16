@@ -15,12 +15,21 @@ public struct FeatureANavigator: Reducer {
         Reduce { state, action in
             switch action {
                 
-            case let .element(id: _, action: .screenOne(.delegate(delegate))):
-                switch delegate {
-                case let .goToScreenTwo(number):
-                    state.append(.screenTwo(.init(number: number)))
+            case let .element(id: _, action: .screen(screenAction)):
+                switch screenAction {
+                case let .screenOne(.delegate(delegate)):
+                    switch delegate {
+                    case let .goToScreenTwo(number):
+                        state.append(.screenTwo(.init(number: number)))
+                    }
+                    return .none
+                    
+                case .screenTwo:
+                    return .none
+                    
+                case .screenOne:
+                    return .none
                 }
-                return .none
             
             case .element:
                 return .none
