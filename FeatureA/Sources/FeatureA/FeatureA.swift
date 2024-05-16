@@ -2,12 +2,7 @@ import SwiftUI
 import ComposableArchitecture
 import TCAExtensions
 
-// could this be useufl somehow? it links the Navigator reducer to its Path reducer. 🤔
-public protocol NavigatorReducer: Reducer {
-    associatedtype Path: Reducer & CaseReducer
-}
-
-public struct FeatureANavigator: NavigatorReducer {
+public struct FeatureANavigator: Reducer {
     @Reducer
     public enum Path {
         case screenOne(ScreenOneReducer)
@@ -16,7 +11,7 @@ public struct FeatureANavigator: NavigatorReducer {
     
     public init() {}
     
-    public var body: some NavigatorReducerOf<Self, Path> {
+    public var body: some NavigatorReducerOf<Path> {
         Reduce { state, action in
             switch action {
                 
@@ -25,7 +20,6 @@ public struct FeatureANavigator: NavigatorReducer {
                 case let .goToScreenTwo(number):
                     state.append(.screenTwo(.init(number: number)))
                 }
-//                state.append(.external(22)) // can't do it cause OpaqueStackElement
                 return .none
             
             case .element:

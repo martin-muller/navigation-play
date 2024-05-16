@@ -1,17 +1,6 @@
 import ComposableArchitecture
 
-// Assuming the integrator has Paths as:
-// enum Path {
-//   case featureA(FeatureAPath)
-//   case featureB(FeatureBPath)
-// }
-// and each feature path has case screenOne screenTwo
-// then
-// external will contain .external(.featureB(.sreenOne))
-// while the internal one will remove the external layer
-//                      .screen(.screenOne)
-
-public typealias NavigatorReducerOf<R: Reducer, P: Reducer> = Reducer<
+public typealias NavigatorReducerOf<P: Reducer> = Reducer<
     StackState<StackElement<P.State>>,
     StackActionOf<P>
 >

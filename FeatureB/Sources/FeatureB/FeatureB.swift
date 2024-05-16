@@ -11,7 +11,7 @@ public struct FeatureBNavigator: Reducer {
     
     public init() {}
     
-    public var body: some NavigatorReducerOf<Self, Path> {
+    public var body: some NavigatorReducerOf<Path> {
         Reduce { state, action in
             switch action {
             case let .element(id: _, action: .detail(.delegate(delegate))):
@@ -34,13 +34,16 @@ public struct FeatureBNavigator: Reducer {
                     
                     _ = state.popLast()
                     
-                    if let lastId = state.ids.last,
-                        case var .screen(.detail(detail)) = state[id: lastId] {
+                    guard let lastId = state.ids.last else {
+                        return .none
+                    }
+                    
+                    if case var .screen(.detail(detail)) = state[id: lastId] {
                         detail.message = updatedMessage
                         state[id: lastId] = .screen(.detail(detail))
                     }
                     
-                    return .send(.element(id: state.ids.last!, action: .detail(.receiveAction)))
+                    return .send(.element(id: lastId, action: .detail(.receiveAction)))
                 }
                 
             case .element:
