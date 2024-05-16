@@ -16,6 +16,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/martin-muller/swift-composable-architecture.git", branch: "feature/less-strict-stack-state"),
+        .package(url: "https://github.com/pointfreeco/xctest-dynamic-overlay.git", exact: "1.1.2"),
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -24,6 +25,7 @@ let package = Package(
             name: "TCAExtensions",
             dependencies: [
                 .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
+                .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
             ]
         
         ),
