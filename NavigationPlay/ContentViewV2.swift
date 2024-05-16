@@ -11,12 +11,16 @@ import FeatureA
 import FeatureB
 import TCAExtensions
 
+/*
+ Example integrator with stack reducers provided on the StackState's Path
+ */
+
 @Reducer
 struct ContentReducerV2 {
     @Reducer
     enum Path: PathableReducer {
-        case featureA(FeatureANavigator.Path.Body = FeatureANavigator.Path.body)
-        case featureB(FeatureBNavigator.Path.Body = FeatureBNavigator.Path.body)
+        case featureA(FeatureA.Path.Body = FeatureA.Path.body)
+        case featureB(FeatureB.Path.Body = FeatureB.Path.body)
         
         // now we just need a way to create this automatically. at runtime i don't think we have enough information.
         // the reduce builder seems to accept for loops, so if we could get a list of all cases in the Path anum...
@@ -26,11 +30,12 @@ struct ContentReducerV2 {
         //    or as another associated value (and this would probably break the @reducer macro, or somehow as a protocol to the feature Path reducer)
         @ReducerBuilder<StackState<Path.State>, StackAction<Path.State, Path.Action>>
         static func navigationReducer() -> some Reducer<StackState<Path.State>, StackAction<Path.State, Path.Action>> {
-            NavigationPathReducer(state: \.featureA, action: \.featureA) {
-                FeatureANavigator()
+            StackReducer(state: \.featureA, action: \.featureA) {
+                FeatureA()
             }
-            NavigationPathReducer(state: \.featureB, action: \.featureB) {
-                FeatureBNavigator()
+            
+            StackReducer(state: \.featureB, action: \.featureB) {
+                FeatureB()
             }
         }
     }
@@ -48,7 +53,7 @@ struct ContentReducerV2 {
     }
     
     var body: some ReducerOf<Self> {
-
+        
         
         Reduce { state, action in
             switch action {
@@ -57,7 +62,7 @@ struct ContentReducerV2 {
                 
             case .openFeatureB:
                 state.path.append(.featureB(.detail(.init())))
-        
+                
             case .path:
                 return .none
             }
@@ -72,7 +77,7 @@ struct ContentViewV2: View {
     
     var body: some View {
         NavigationStack(
-          path: $store.scope(state: \.path, action: \.path)
+            path: $store.scope(state: \.path, action: \.path)
         ) {
             VStack {
                 Text("Big Home")
@@ -90,14 +95,8 @@ struct ContentViewV2: View {
             case .featureA(let store):
                 FeatureAView(store: store)
             case .featureB(let store):
-                // CAREFUL, IF THE INDIVIDUAL SCREENS BODY HAVE MULTIPLE VIEWS NOT WRAPPED IN A STACK, THEN THIS WILL RETURN MULTIPLE VIEWS AND IT CAN MESS THIGNS UP.
-                // FOR EXAMPLE THE FRAME AND OVERLAY OMDIFIERS BELOW WOULD APPLY TO 2 SEPARATE VIEWS SO YOU SEE FEATURE B TWICE
                 FeatureBView(store: store)
-//                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-//                    .overlay(alignment: .top) {
-//                        Text("FEATURE B")
-//                    }
-          }
+            }
         }
     }
 }

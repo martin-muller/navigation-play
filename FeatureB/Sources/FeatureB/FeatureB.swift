@@ -2,7 +2,11 @@ import SwiftUI
 import ComposableArchitecture
 import TCAExtensions
 
-public struct FeatureBNavigator: Reducer {
+/*
+ Example of `StackReducer` implementation that pops and updates the previous destination.
+ */
+
+public struct FeatureB: Reducer {
     @Reducer
     public enum Path {
         case detail(Detail)
@@ -11,11 +15,11 @@ public struct FeatureBNavigator: Reducer {
     
     public init() {}
     
-    public var body: some NavigatorReducerOf<Path> {
+    public var body: some StackReducerOf<Path> {
         Reduce { state, action in
             switch action {
-            case let .element(id: _, action: .screen(screenAction)):
-                switch screenAction {
+            case let .element(id: _, action: .internal(internalAction)):
+                switch internalAction {
                 case let .detail(.delegate(delegate)):
                     switch delegate {
                     case let .openEdit(value: value):
@@ -28,7 +32,7 @@ public struct FeatureBNavigator: Reducer {
                     case .save:
                         let updatedMessage: String
                         if let lastId = state.ids.last,
-                            case var .screen(.edit(edit)) = state[id: lastId] {
+                           case var .edit(edit) = state[id: lastId] {
                             updatedMessage = edit.value
                         } else {
                             return .none
@@ -40,9 +44,9 @@ public struct FeatureBNavigator: Reducer {
                             return .none
                         }
                         
-                        if case var .screen(.detail(detail)) = state[id: lastId] {
+                        if case var .detail(detail) = state[id: lastId] {
                             detail.message = updatedMessage
-                            state[id: lastId] = .screen(.detail(detail))
+                            state[id: lastId] = .detail(detail)
                         }
                         
                         return .send(.element(id: lastId, action: .detail(.receiveAction)))
@@ -69,11 +73,11 @@ public struct FeatureBNavigator: Reducer {
 }
 
 public struct FeatureBView: View {
-    public init(store: StoreOf<FeatureBNavigator.Path>) {
+    public init(store: StoreOf<FeatureB.Path>) {
         self.store = store
     }
     
-    @Bindable var store: StoreOf<FeatureBNavigator.Path>
+    @Bindable var store: StoreOf<FeatureB.Path>
     
     public var body: some View {
         switch store.case {

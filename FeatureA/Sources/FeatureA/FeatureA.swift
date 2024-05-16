@@ -2,7 +2,11 @@ import SwiftUI
 import ComposableArchitecture
 import TCAExtensions
 
-public struct FeatureANavigator: Reducer {
+/*
+ Simple example of `StackReducer` implementation that appends destinations on the stack.
+ */
+
+public struct FeatureA: Reducer {
     @Reducer
     public enum Path {
         case screenOne(ScreenOneReducer)
@@ -11,12 +15,12 @@ public struct FeatureANavigator: Reducer {
     
     public init() {}
     
-    public var body: some NavigatorReducerOf<Path> {
+    public var body: some StackReducerOf<Path> {
         Reduce { state, action in
             switch action {
                 
-            case let .element(id: _, action: .screen(screenAction)):
-                switch screenAction {
+            case let .element(id: _, action: .internal(internalAction)):
+                switch internalAction {
                 case let .screenOne(.delegate(delegate)):
                     switch delegate {
                     case let .goToScreenTwo(number):
@@ -30,7 +34,7 @@ public struct FeatureANavigator: Reducer {
                 case .screenOne:
                     return .none
                 }
-            
+                
             case .element:
                 return .none
                 
@@ -45,11 +49,11 @@ public struct FeatureANavigator: Reducer {
 }
 
 public struct FeatureAView: View {
-    public init(store: StoreOf<FeatureANavigator.Path>) {
+    public init(store: StoreOf<FeatureA.Path>) {
         self.store = store
     }
     
-    @Bindable var store: StoreOf<FeatureANavigator.Path>
+    @Bindable var store: StoreOf<FeatureA.Path>
     
     public var body: some View {
         switch store.case {

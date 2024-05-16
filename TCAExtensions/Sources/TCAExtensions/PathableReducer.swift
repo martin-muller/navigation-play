@@ -13,25 +13,7 @@ public protocol PathableReducer: Reducer, CaseReducer {
     static func navigationReducer() -> NavigaationReducer
 }
 
-extension Reducer {
-    public func forEach<DestinationState: CaseReducerState, DestinationAction, Navigator: Reducer>(
-        _ state: WritableKeyPath<State, StackState<DestinationState>>,
-        action: CaseKeyPath<Action, StackAction<DestinationState, DestinationAction>>,
-        @ReducerBuilder<StackState<DestinationState>, StackAction<DestinationState, DestinationAction>> navigation: () -> Navigator
-    ) -> some ReducerOf<Self> where DestinationState.StateReducer.Action == DestinationAction,
-                                    Navigator.Action == StackAction<DestinationState, DestinationAction>,
-                                    Navigator.State == StackState<DestinationState>
-    {
-        CombineReducers {
-            self.forEach(state, action: action) {
-                DestinationState.StateReducer.body
-            }
-            Scope(state: state, action: action) {
-                navigation()
-            }
-        }
-    }
-    
+extension Reducer {    
     public func forEach<DestinationState: CaseReducerState, DestinationAction, PathReducer: PathableReducer>(
         _ state: WritableKeyPath<State, StackState<DestinationState>>,
         action: CaseKeyPath<Action, StackAction<DestinationState, DestinationAction>>,
