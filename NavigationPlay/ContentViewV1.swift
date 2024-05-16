@@ -36,8 +36,6 @@ struct ContentReducerV1 {
     }
     
     var body: some ReducerOf<Self> {
-        
-        
         Reduce { state, action in
             switch action {
             case .openFeatureA:
@@ -45,9 +43,12 @@ struct ContentReducerV1 {
                 
             case .openFeatureB:
                 state.path.append(.featureB(.detail(.init())))
+        
+            case .path(.element(id: _, action: .featureA(.screenTwo(.delegate(.openExternal))))):
+                state.path.append(.featureB(.detail(.init())))
                 
             case .path:
-                return .none
+                break
             }
             return .none
         }
@@ -81,6 +82,7 @@ struct ContentViewV1: View {
                     store.send(.openFeatureB)
                 }
             }
+            .navigationTitle("Home - Integrator v1")
         } destination: { store in
             switch store.case {
             case .featureA(let store):
